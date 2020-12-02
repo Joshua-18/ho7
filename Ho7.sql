@@ -97,16 +97,16 @@ DECLARE
 BEGIN
     lv_name := order_info_pkg.ship_name_pf(12);
     order_info_pkg.basket_info_pp(12,lv_id_shop, lv_order_dat);
-    DBMS_OUTPUT.PUT_LINE(lv_name);
-    DBMS_OUTPUT.PUT_LINE(lv_id_shop);
-    DBMS_OUTPUT.PUT_LINE(lv_order_dat);
+    DBMS_OUTPUT.PUT_LINE('NAME: '||lv_name);
+    DBMS_OUTPUT.PUT_LINE('ID: '||lv_id_shop);
+    DBMS_OUTPUT.PUT_LINE('DATE: '||lv_order_dat);
 END;
 /
 SELECT order_info_pkg.ship_name_pf(idbasket)
 FROM bb_basket
 WHERE idbasket = 12;
 /
--- 7-3
+-- #7-3
 CREATE OR REPLACE PACKAGE order_info_pkg 
  IS
  PROCEDURE basket_info_pp
@@ -157,11 +157,199 @@ DECLARE
     lv_id_shop    NUMBER(4);
     lv_order_dat    DATE; 
 BEGIN
-    lv_name := order_info_pkg.ship_name_pf(4);
-    order_info_pkg.basket_info_pp(4,lv_id_shop, lv_order_dat);
-    DBMS_OUTPUT.PUT_LINE(lv_name);
-    DBMS_OUTPUT.PUT_LINE(lv_id_shop);
-    DBMS_OUTPUT.PUT_LINE(lv_order_dat);
+    order_info_pkg.basket_info_pp(6,lv_id_shop, lv_order_dat, lv_name);
+    DBMS_OUTPUT.PUT_LINE('NAME: '||lv_name);
+    DBMS_OUTPUT.PUT_LINE('ID: '||lv_id_shop);
+    DBMS_OUTPUT.PUT_LINE('DATE: '||lv_order_dat);
 END;
 /
---7-4
+-- #7-4
+-- AS A FUNCTION
+CREATE OR REPLACE 
+FUNCTION LOGIN_CK
+(p_usr  IN VARCHAR2,
+ p_pwd  IN VARCHAR2)
+RETURN VARCHAR2 
+AS
+lv_id_var  bb_shopper.idshopper%TYPE;
+lv_zip_var bb_shopper.zipcode%type;
+lv_usr bb_shopper.username%type;
+lv_pass bb_shopper.password%TYPE;
+lv_match VARCHAR2(1) := 'N';
+BEGIN
+    SELECT idshopper, SUBSTR(zipcode,1,3), username, password
+    INTO lv_id_var, lv_zip_var, lv_usr, lv_pass
+    FROM bb_shopper
+    WHERE username = p_usr
+        AND password = p_pwd;
+    lv_match := 'Y';
+  RETURN lv_match;
+EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+        DBMS_OUTPUT.PUT_LINE('INVALID LOGIN CREDENTIALS!');
+END LOGIN_CK;
+/
+-- ANON BLOCK
+DECLARE
+    lv_login_ck  bb_shopper.username%TYPE;
+    lv_usr_ck   bb_shopper.username%TYPE := 'gma1';
+    lv_pwd_ck   bb_shopper.password%TYPE := 'goofy';
+BEGIN
+    lv_login_ck := LOGIN_CK(lv_usr_ck, lv_pwd_ck);
+    DBMS_OUTPUT.PUT_LINE('Username: '||lv_usr_ck);
+    DBMS_OUTPUT.PUT_LINE('Password: '||lv_pwd_ck);
+    DBMS_OUTPUT.PUT_LINE('valid?(Y/N): '|| lv_login_ck);
+END;
+/
+-- PLACEING IT IN A PACKAGE HEAD1
+create or replace PACKAGE LOGIN_PKG
+IS
+lv_id_var  bb_shopper.idshopper%TYPE;
+lv_zip_var bb_shopper.zipcode%TYPE;
+FUNCTION LOGIN_CK
+(p_usr  IN VARCHAR2,
+ p_pwd  IN VARCHAR2)
+RETURN VARCHAR2;
+END;
+/
+-- IN A PACKAGE BODY
+create or replace PACKAGE BODY LOGIN_PKG
+IS
+FUNCTION LOGIN_CK
+(p_usr  IN VARCHAR2,
+ p_pwd  IN VARCHAR2)
+RETURN VARCHAR2 
+AS
+lv_id_var  bb_shopper.idshopper%TYPE;
+lv_zip_var bb_shopper.zipcode%type;
+lv_usr bb_shopper.username%type;
+lv_pass bb_shopper.password%TYPE;
+lv_match VARCHAR2(1) := 'N';
+BEGIN
+    SELECT idshopper, SUBSTR(zipcode,1,3), username, password
+    INTO lv_id_var, lv_zip_var, lv_usr, lv_pass
+    FROM bb_shopper
+    WHERE username = p_usr
+        AND password = p_pwd;
+    lv_match := 'Y';
+    lv_id_var := lv_id_var;
+    lv_zip_var := lv_zip_var;
+  RETURN lv_match;
+EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+        DBMS_OUTPUT.PUT_LINE('INVALID LOGIN CREDENTIALS!');
+END LOGIN_CK;
+END;
+/
+DECLARE
+    lv_login_ck  bb_shopper.username%TYPE;
+    lv_usr_ck   bb_shopper.username%TYPE := 'gma1';
+    lv_pwd_ck   bb_shopper.password%TYPE := 'goofy';
+BEGIN
+    lv_login_ck := LOGIN_CK(lv_usr_ck, lv_pwd_ck);
+    DBMS_OUTPUT.PUT_LINE('Username: '||lv_usr_ck);
+    DBMS_OUTPUT.PUT_LINE('Password: '||lv_pwd_ck);
+    DBMS_OUTPUT.PUT_LINE('valid?(Y/N): '|| lv_login_ck);
+END;
+/
+-- #7-5
+CREATE OR REPLACE PACKAGE shop_query_pkg
+IS
+  PROCEDURE shopper_search 
+    (p_usr_id    IN bb_shopper.idshopper%TYPE,
+     p_usr_name  OUT VARCHAR2,
+     p_usr_city  OUT bb_shopper.city%TYPE,
+     p_usr_state OUT bb_shopper.state%TYPE,
+     p_usr_phone OUT bb_shopper.phone%TYPE,
+     p_usr_email OUT bb_shopper.email%TYPE);
+-- OVERLOADED
+  PROCEDURE shopper_search 
+    (p_usr_lastn  OUT bb_shopper.lastname%TYPE,
+     p_usr_name  OUT VARCHAR2,
+     p_usr_city  OUT bb_shopper.city%TYPE,
+     p_usr_state OUT bb_shopper.state%TYPE,
+     p_usr_phone OUT bb_shopper.phone%TYPE,
+     p_usr_email OUT bb_shopper.email%TYPE);
+END;
+/
+CREATE OR REPLACE PACKAGE BODY shop_query_pkg
+IS
+  PROCEDURE shopper_search 
+    (p_usr_id IN bb_shopper.idshopper%TYPE,
+     p_usr_name OUT VARCHAR2,
+     p_usr_city OUT bb_shopper.city%TYPE,
+     p_usr_state OUT bb_shopper.state%TYPE,
+     p_usr_phone OUT bb_shopper.phone%TYPE,
+     p_usr_email OUT bb_shopper.email%TYPE)
+IS
+  BEGIN
+    SELECT firstname||' '||lastname, city, state, phone, email
+    INTO p_usr_name, p_usr_city, p_usr_state, p_usr_phone, p_usr_email
+    FROM bb_shopper
+    WHERE idshopper = p_usr_id;
+   EXCEPTION
+  WHEN NO_DATA_FOUND THEN
+    DBMS_OUTPUT.PUT_LINE('Invalid Credential');
+END;
+-- OVERLOADED
+  PROCEDURE shopper_search 
+    (p_usr_lastn OUT bb_shopper.lastname%TYPE,
+     p_usr_name  OUT VARCHAR2,
+     p_usr_city OUT bb_shopper.city%TYPE,
+     p_usr_state OUT bb_shopper.state%TYPE,
+     p_usr_phone OUT bb_shopper.phone%TYPE,
+     p_usr_email OUT bb_shopper.email%TYPE)
+IS
+  BEGIN
+    SELECT firstname||' '||lastname, city, state, phone, email
+    INTO p_usr_name, p_usr_city, p_usr_state, p_usr_phone, p_usr_email
+    FROM bb_shopper
+    WHERE lastname = p_usr_lastn;
+    EXCEPTION
+  WHEN NO_DATA_FOUND THEN
+    DBMS_OUTPUT.PUT_LINE('Invalid Credential');
+ END;
+END;
+/
+-- ANON BLOCK TO SEARCH SHOPPER INFO
+DECLARE
+  lv_name  VARCHAR2(25);
+  lv_lname bb_shopper.lastname%TYPE := 'Ratman';
+  lv_city bb_shopper.city%TYPE;
+  lv_state bb_shopper.state%TYPE;
+  lv_phone bb_shopper.phone%TYPE;
+  lv_email bb_shopper.email%TYPE;
+  lv_id    bb_shopper.idshopper%TYPE := 23; 
+BEGIN
+shop_query_pkg.shopper_search(lv_id,lv_name,lv_city,lv_state,
+    lv_phone,lv_email);
+  DBMS_OUTPUT.PUT_LINE(lv_name);
+  DBMS_OUTPUT.PUT_LINE(lv_city);
+  DBMS_OUTPUT.PUT_LINE(lv_state);
+  DBMS_OUTPUT.PUT_LINE(lv_phone);
+  DBMS_OUTPUT.PUT_LINE(lv_email);
+-- OVERLOADED
+shop_query_pkg.shopper_search(lv_lname,lv_lname,lv_city, lv_state,
+    lv_phone,lv_email);
+  DBMS_OUTPUT.PUT_LINE(lv_lname);
+  DBMS_OUTPUT.PUT_LINE(lv_city);
+  DBMS_OUTPUT.PUT_LINE(lv_state);
+  DBMS_OUTPUT.PUT_LINE(lv_phone);
+  DBMS_OUTPUT.PUT_LINE(lv_email);
+END;
+/
+-- #7-6
+CREATE OR REPLACE PACKAGE tax_rate_pkg
+  IS
+  pv_tax_nc CONSTANT NUMBER := .035;
+  pv_tax_tx CONSTANT NUMBER := .05;
+  pv_tax_tn CONSTANT NUMBER := .02;
+END;
+/
+BEGIN
+  DBMS_OUTPUT.PUT_LINE(tax_rate_pkg.pv_tax_nc);
+  DBMS_OUTPUT.PUT_LINE(tax_rate_pkg.pv_tax_tx);
+  DBMS_OUTPUT.PUT_LINE(tax_rate_pkg.pv_tax_tn);
+END;
+/
+-- #7-7
