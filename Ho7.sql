@@ -307,7 +307,7 @@ IS
     WHERE lastname = p_usr_lastn;
     EXCEPTION
   WHEN NO_DATA_FOUND THEN
-    DBMS_OUTPUT.PUT_LINE('Invalid Credential');
+    DBMS_OUTPUT.PUT_LINE('Invalid Lastname');
  END;
 END;
 /
@@ -323,11 +323,11 @@ DECLARE
 BEGIN
 shop_query_pkg.shopper_search(lv_id,lv_name,lv_city,lv_state,
     lv_phone,lv_email);
-  DBMS_OUTPUT.PUT_LINE(lv_name);
-  DBMS_OUTPUT.PUT_LINE(lv_city);
-  DBMS_OUTPUT.PUT_LINE(lv_state);
-  DBMS_OUTPUT.PUT_LINE(lv_phone);
-  DBMS_OUTPUT.PUT_LINE(lv_email);
+  DBMS_OUTPUT.PUT_LINE('Name: '||lv_name);
+  DBMS_OUTPUT.PUT_LINE('City: '||lv_city);
+  DBMS_OUTPUT.PUT_LINE('State: '||lv_state);
+  DBMS_OUTPUT.PUT_LINE('Phone: '||lv_phone);
+  DBMS_OUTPUT.PUT_LINE('Email: '||lv_email);
 -- OVERLOADED
 shop_query_pkg.shopper_search(lv_lname,lv_lname,lv_city, lv_state,
     lv_phone,lv_email);
@@ -347,9 +347,46 @@ CREATE OR REPLACE PACKAGE tax_rate_pkg
 END;
 /
 BEGIN
-  DBMS_OUTPUT.PUT_LINE(tax_rate_pkg.pv_tax_nc);
-  DBMS_OUTPUT.PUT_LINE(tax_rate_pkg.pv_tax_tx);
-  DBMS_OUTPUT.PUT_LINE(tax_rate_pkg.pv_tax_tn);
+  DBMS_OUTPUT.PUT_LINE('nc: '||tax_rate_pkg.pv_tax_nc);
+  DBMS_OUTPUT.PUT_LINE('tx: '||tax_rate_pkg.pv_tax_tx);
+  DBMS_OUTPUT.PUT_LINE('tn: '||tax_rate_pkg.pv_tax_tn);
 END;
 /
 -- #7-7
+--#7-8
+CREATE OR REPLACE PACKAGE login_pkg
+  IS
+  usr_log_time DATE;
+  pv_id_num NUMBER(3);
+  FUNCTION login_ck_pf 
+    (p_user IN VARCHAR2,
+     p_pass IN VARCHAR2)
+     RETURN CHAR;
+END;
+/
+CREATE OR REPLACE PACKAGE BODY login_pkg
+  IS
+  FUNCTION login_ck_pf
+    (p_user IN VARCHAR2,
+     p_pass IN VARCHAR2)
+  RETURN CHAR
+  IS
+    lv_ck_txt CHAR(1) := 'N';
+    lv_id_num NUMBER(5);
+BEGIN
+  SELECT idShopper
+    INTO lv_id_num
+    FROM bb_shopper
+    WHERE username = p_user
+      AND password = p_pass;
+      lv_ck_txt := 'Y';
+      pv_id_num := lv_id_num;
+  RETURN lv_ck_txt;
+EXCEPTION
+  WHEN NO_DATA_FOUND THEN
+    RETURN lv_ck_txt;
+   END;
+BEGIN
+   usr_log_time := SYSDATE;
+END;
+/
