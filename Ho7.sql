@@ -361,6 +361,32 @@ CREATE OR REPLACE PACKAGE tax_rate_pkg
   FUNCTION tax_ck
     (p_state IN bb_tax.state%TYPE)
     RETURN NUMBER;
+END tax_rate_pkg;
+/
+CREATE OR REPLACE PACKAGE BODY tax_rate_pkg
+  IS
+  FUNCTION tax_ck
+    (p_state IN bb_tax.state%TYPE)
+    RETURN NUMBER
+  IS
+    lv_taxrate bb_tax.taxrate%TYPE :=0;
+BEGIN
+  FOR tax_rec IN cur_tax LOOP
+    IF tax_rec.state = p_state THEN
+      lv_taxrate := tax_rec.taxrate;
+      RETURN lv_taxrate;
+      EXIT;
+    END IF;
+  END LOOP;
+  END;
+END tax_rate_pkg;
+/
+-- ANON BLOCK
+DECLARE
+    lv_rate bb_tax.taxrate%TYPE;
+BEGIN
+    lv_rate := tax_rate_pkg.tax_ck('NC');
+    DBMS_OUTPUT.PUT_LINE('NC: '||lv_rate);
 END;
 /
 --#7-8

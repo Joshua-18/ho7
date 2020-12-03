@@ -445,6 +445,53 @@ tn: .02
 PL/SQL procedure successfully completed.
 
 SQL> -- #7-7
+SQL> CREATE OR REPLACE PACKAGE tax_rate_pkg
+  2    IS
+  3    CURSOR cur_tax IS
+  4      SELECT state, taxrate
+  5        FROM bb_tax;
+  6    FUNCTION tax_ck
+  7      (p_state IN bb_tax.state%TYPE)
+  8      RETURN NUMBER;
+  9  END tax_rate_pkg;
+ 10  /
+
+Package TAX_RATE_PKG compiled
+
+SQL> CREATE OR REPLACE PACKAGE BODY tax_rate_pkg
+  2    IS
+  3    FUNCTION tax_ck
+  4      (p_state IN bb_tax.state%TYPE)
+  5      RETURN NUMBER
+  6    IS
+  7      lv_taxrate bb_tax.taxrate%TYPE :=0;
+  8  BEGIN
+  9    FOR tax_rec IN cur_tax LOOP
+ 10      IF tax_rec.state = p_state THEN
+ 11        lv_taxrate := tax_rec.taxrate;
+ 12        RETURN lv_taxrate;
+ 13        EXIT;
+ 14      END IF;
+ 15    END LOOP;
+ 16    END;
+ 17  END tax_rate_pkg;
+ 18  /
+
+Package Body TAX_RATE_PKG compiled
+
+SQL> -- ANON BLOCK
+SQL> DECLARE
+  2      lv_rate bb_tax.taxrate%TYPE;
+  3  BEGIN
+  4      lv_rate := tax_rate_pkg.tax_ck('NC');
+  5      DBMS_OUTPUT.PUT_LINE('NC: '||lv_rate);
+  6  END;
+  7  /
+NC: .03
+
+
+PL/SQL procedure successfully completed.
+
 SQL> --#7-8
 SQL> CREATE OR REPLACE PACKAGE login_pkg
   2    IS
@@ -487,5 +534,23 @@ SQL> CREATE OR REPLACE PACKAGE BODY login_pkg
  26  /
 
 Package Body LOGIN_PKG compiled
+
+SQL> -- ANON BLOCK
+SQL> DECLARE
+  2      lv_usr bb_shopper.username%TYPE := 'kids2';
+  3      lv_pwd bb_shopper.password%TYPE := 'steel';
+  4  BEGIN
+  5  DBMS_OUTPUT.PUT_LINE('user: '||lv_usr);
+  6  DBMS_OUTPUT.PUT_LINE('password: '||lv_pwd);
+  7  DBMS_OUTPUT.PUT_LINE('LOGIN TIME: '||TO_CHAR(login_pkg.usr_log_time,
+  8      'MM/DD/YYYY HH:MM:SS'));
+  9  END;
+ 10  /
+user: kids2
+password: steel
+LOGIN TIME: 12/02/2020 07:12:58
+
+
+PL/SQL procedure successfully completed.
 
 SQL> spool off
