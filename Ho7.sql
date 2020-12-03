@@ -353,6 +353,16 @@ BEGIN
 END;
 /
 -- #7-7
+CREATE OR REPLACE PACKAGE tax_rate_pkg
+  IS
+  CURSOR cur_tax IS
+    SELECT state, taxrate
+      FROM bb_tax;
+  FUNCTION tax_ck
+    (p_state IN bb_tax.state%TYPE)
+    RETURN NUMBER;
+END;
+/
 --#7-8
 CREATE OR REPLACE PACKAGE login_pkg
   IS
@@ -388,5 +398,16 @@ EXCEPTION
    END;
 BEGIN
    usr_log_time := SYSDATE;
+END;
+/
+-- ANON BLOCK
+DECLARE
+    lv_usr bb_shopper.username%TYPE := 'kids2';
+    lv_pwd bb_shopper.password%TYPE := 'steel';
+BEGIN
+DBMS_OUTPUT.PUT_LINE('user: '||lv_usr);
+DBMS_OUTPUT.PUT_LINE('password: '||lv_pwd);
+DBMS_OUTPUT.PUT_LINE('LOGIN TIME: '||TO_CHAR(login_pkg.usr_log_time,
+    'MM/DD/YYYY HH:MM:SS'));
 END;
 /
