@@ -287,9 +287,6 @@ IS
     INTO p_usr_name, p_usr_city, p_usr_state, p_usr_phone, p_usr_email
     FROM bb_shopper
     WHERE idshopper = p_usr_id;
-   EXCEPTION
-  WHEN NO_DATA_FOUND THEN
-    DBMS_OUTPUT.PUT_LINE('Invalid Credential');
 END;
 -- OVERLOADED
   PROCEDURE shopper_search 
@@ -305,16 +302,13 @@ IS
     INTO p_usr_name, p_usr_city, p_usr_state, p_usr_phone, p_usr_email
     FROM bb_shopper
     WHERE lastname = p_usr_lastn;
-    EXCEPTION
-  WHEN NO_DATA_FOUND THEN
-    DBMS_OUTPUT.PUT_LINE('Invalid Lastname');
  END;
 END;
 /
 -- ANON BLOCK TO SEARCH SHOPPER INFO
 DECLARE
   lv_name  VARCHAR2(25);
-  lv_lname bb_shopper.lastname%TYPE := 'Ratman';
+  lv_lname bb_shopper.lastname%TYPE := 'Ratmans';
   lv_city bb_shopper.city%TYPE;
   lv_state bb_shopper.state%TYPE;
   lv_phone bb_shopper.phone%TYPE;
